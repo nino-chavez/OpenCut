@@ -497,11 +497,13 @@ function ProjectCard({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <a
-                      href={`/editor/${project.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(`/editor/${project.id}`, "_blank");
+                      }}
                       className={`size-6 p-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-all shrink-0 hover:bg-accent hover:text-accent-foreground ${
                         isDropdownOpen
                           ? "opacity-100"
@@ -510,7 +512,7 @@ function ProjectCard({
                     >
                       <ExternalLink className="size-4" />
                       <span className="sr-only">Open in new tab</span>
-                    </a>
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Open in new tab</p>
