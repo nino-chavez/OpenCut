@@ -24,6 +24,7 @@ export const defaultKeybindings: KeybindingConfig = {
   "ctrl+a": "select-all",
   "ctrl+d": "duplicate-selected",
   "ctrl+c": "copy-selected",
+  "ctrl+x": "cut-selected",
   "ctrl+v": "paste-selected",
   "ctrl+z": "undo",
   "ctrl+shift+z": "redo",

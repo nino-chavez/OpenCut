@@ -67,6 +67,10 @@ const actionDescriptions: Record<
     description: "Copy selected elements",
     category: "Editing",
   },
+  "cut-selected": {
+    description: "Cut selected elements",
+    category: "Editing",
+  },
   "paste-selected": {
     description: "Paste elements at playhead",
     category: "Editing",

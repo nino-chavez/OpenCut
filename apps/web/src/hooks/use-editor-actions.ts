@@ -207,6 +207,16 @@ export function useEditorActions() {
   );
 
   useActionHandler(
+    "cut-selected",
+    () => {
+      if (selectedElements.length === 0) return;
+      useTimelineStore.getState().copySelected();
+      deleteSelected();
+    },
+    undefined
+  );
+
+  useActionHandler(
     "paste-selected",
     () => {
       useTimelineStore.getState().pasteAtTime(currentTime);
