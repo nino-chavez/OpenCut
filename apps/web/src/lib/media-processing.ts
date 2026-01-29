@@ -9,6 +9,31 @@ import { generateThumbnail, getVideoInfo } from "./mediabunny-utils";
 
 export interface ProcessedMediaItem extends Omit<MediaFile, "id"> {}
 
+// File size limits in bytes
+const FILE_SIZE_LIMITS = {
+  image: 50 * 1024 * 1024, // 50MB
+  video: 4 * 1024 * 1024 * 1024, // 4GB
+  audio: 500 * 1024 * 1024, // 500MB
+} as const;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function validateFileSize(file: File, fileType: "image" | "video" | "audio"): { valid: boolean; error?: string } {
+  const limit = FILE_SIZE_LIMITS[fileType];
+  if (file.size > limit) {
+    return {
+      valid: false,
+      error: `${file.name} (${formatFileSize(file.size)}) exceeds the ${formatFileSize(limit)} limit for ${fileType} files`,
+    };
+  }
+  return { valid: true };
+}
+
 export async function processMediaFiles(
   files: FileList | File[],
   onProgress?: (progress: number) => void
@@ -24,6 +49,13 @@ export async function processMediaFiles(
 
     if (!fileType) {
       toast.error(`Unsupported file type: ${file.name}`);
+      continue;
+    }
+
+    // Validate file size before processing
+    const sizeValidation = validateFileSize(file, fileType);
+    if (!sizeValidation.valid) {
+      toast.error(sizeValidation.error);
       continue;
     }
 
