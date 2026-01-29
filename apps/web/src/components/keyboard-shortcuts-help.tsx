@@ -1,6 +1,6 @@
 "use client";
 
-import { Keyboard } from "lucide-react";
+import { Keyboard, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -8,6 +8,7 @@ import {
   useKeyboardShortcutsHelp,
 } from "@/hooks/use-keyboard-shortcuts-help";
 import { useKeybindingsStore } from "@/stores/keybindings-store";
+import { ShortcutKey } from "@/types/keybinding";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -19,17 +20,22 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 
+interface RecordingState {
+  shortcut: KeyboardShortcut;
+  keyToReplace: ShortcutKey | null; // null means adding a new key
+}
+
 export function KeyboardShortcutsHelp() {
   const [open, setOpen] = useState(false);
-  const [recordingShortcut, setRecordingShortcut] =
-    useState<KeyboardShortcut | null>(null);
+  const [recordingState, setRecordingState] = useState<RecordingState | null>(
+    null
+  );
 
   const {
     updateKeybinding,
     removeKeybinding,
     getKeybindingString,
     validateKeybinding,
-    getKeybindingsForAction,
     setIsRecording,
     resetToDefaults,
     isRecording,
@@ -41,7 +47,7 @@ export function KeyboardShortcutsHelp() {
   const categories = Array.from(new Set(shortcuts.map((s) => s.category)));
 
   useEffect(() => {
-    if (!isRecording || !recordingShortcut) return;
+    if (!isRecording || !recordingState) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       e.preventDefault();
@@ -49,33 +55,35 @@ export function KeyboardShortcutsHelp() {
 
       const keyString = getKeybindingString(e);
       if (keyString) {
-        // Auto-save the new keybinding
+        // Check for conflicts with other actions (not the current one)
         const conflict = validateKeybinding(
           keyString,
-          recordingShortcut.action
+          recordingState.shortcut.action
         );
         if (conflict) {
           toast.error(
             `Key "${keyString}" is already bound to "${conflict.existingAction}"`
           );
-          setRecordingShortcut(null);
+          setRecordingState(null);
+          setIsRecording(false);
           return;
         }
 
-        // Remove old keybindings for this action
-        const oldKeys = getKeybindingsForAction(recordingShortcut.action);
-        oldKeys.forEach((key) => removeKeybinding(key));
+        // If editing an existing key, remove only that specific key
+        if (recordingState.keyToReplace) {
+          removeKeybinding(recordingState.keyToReplace);
+        }
 
-        // Add new keybinding
-        updateKeybinding(keyString, recordingShortcut.action);
+        // Add the new keybinding
+        updateKeybinding(keyString, recordingState.shortcut.action);
 
         setIsRecording(false);
-        setRecordingShortcut(null);
+        setRecordingState(null);
       }
     };
 
     const handleClickOutside = () => {
-      setRecordingShortcut(null);
+      setRecordingState(null);
       setIsRecording(false);
     };
 
@@ -87,19 +95,33 @@ export function KeyboardShortcutsHelp() {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [
-    recordingShortcut,
+    recordingState,
     getKeybindingString,
     updateKeybinding,
     removeKeybinding,
     validateKeybinding,
-    getKeybindingsForAction,
     setIsRecording,
     isRecording,
   ]);
 
-  const handleStartRecording = (shortcut: KeyboardShortcut) => {
-    setRecordingShortcut(shortcut);
+  const handleStartRecording = (
+    shortcut: KeyboardShortcut,
+    keyToReplace: ShortcutKey | null
+  ) => {
+    setRecordingState({ shortcut, keyToReplace });
     setIsRecording(true);
+  };
+
+  const handleRemoveKey = (
+    shortcut: KeyboardShortcut,
+    keyToRemove: ShortcutKey
+  ) => {
+    // Don't allow removing if it's the last shortcut for this action
+    if (shortcut.keys.length <= 1) {
+      toast.error("Cannot remove the last shortcut for this action");
+      return;
+    }
+    removeKeybinding(keyToRemove);
   };
 
   return (
@@ -118,7 +140,7 @@ export function KeyboardShortcutsHelp() {
           </DialogTitle>
           <DialogDescription>
             Speed up your video editing workflow with these keyboard shortcuts.
-            Click any shortcut key to edit it.
+            Click any shortcut to edit it, or hover and click + to add more.
           </DialogDescription>
         </DialogHeader>
 
@@ -136,10 +158,9 @@ export function KeyboardShortcutsHelp() {
                       <ShortcutItem
                         key={shortcut.action}
                         shortcut={shortcut}
-                        isRecording={
-                          shortcut.action === recordingShortcut?.action
-                        }
+                        recordingState={recordingState}
                         onStartRecording={handleStartRecording}
+                        onRemoveKey={handleRemoveKey}
                       />
                     ))}
                 </div>
@@ -159,13 +180,23 @@ export function KeyboardShortcutsHelp() {
 
 function ShortcutItem({
   shortcut,
-  isRecording,
+  recordingState,
   onStartRecording,
+  onRemoveKey,
 }: {
   shortcut: KeyboardShortcut;
-  isRecording: boolean;
-  onStartRecording: (shortcut: KeyboardShortcut) => void;
+  recordingState: RecordingState | null;
+  onStartRecording: (
+    shortcut: KeyboardShortcut,
+    keyToReplace: ShortcutKey | null
+  ) => void;
+  onRemoveKey: (shortcut: KeyboardShortcut, keyToRemove: ShortcutKey) => void;
 }) {
+  const isRecordingThisAction =
+    recordingState?.shortcut.action === shortcut.action;
+  const isAddingNew =
+    isRecordingThisAction && recordingState?.keyToReplace === null;
+
   // Filter out lowercase duplicates for display - if both "j" and "J" exist, only show "J"
   const displayKeys = shortcut.keys.filter((key: string) => {
     if (
@@ -178,7 +209,7 @@ function ShortcutItem({
   });
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between group">
       <div className="flex items-center gap-3">
         {shortcut.icon && (
           <div className="text-muted-foreground">{shortcut.icon}</div>
@@ -186,27 +217,72 @@ function ShortcutItem({
         <span className="text-sm">{shortcut.description}</span>
       </div>
       <div className="flex items-center gap-1">
-        {displayKeys.map((key: string, index: number) => (
-          <div key={key} className="flex items-center gap-1">
-            <div className="flex items-center">
-              {key.split("+").map((keyPart: string, partIndex: number) => {
-                const keyId = `${shortcut.id}-${index}-${partIndex}`;
-                return (
-                  <EditableShortcutKey
-                    key={keyId}
-                    isRecording={isRecording}
-                    onStartRecording={() => onStartRecording(shortcut)}
+        {displayKeys.map((key: string, index: number) => {
+          const isRecordingThisKey =
+            isRecordingThisAction &&
+            recordingState?.keyToReplace === (key as ShortcutKey);
+          return (
+            <div key={key} className="flex items-center gap-1">
+              <div className="flex items-center relative">
+                {key.split("+").map((keyPart: string, partIndex: number) => {
+                  const keyId = `${shortcut.id}-${index}-${partIndex}`;
+                  return (
+                    <EditableShortcutKey
+                      key={keyId}
+                      isRecording={isRecordingThisKey}
+                      onStartRecording={() =>
+                        onStartRecording(shortcut, key as ShortcutKey)
+                      }
+                    >
+                      {keyPart}
+                    </EditableShortcutKey>
+                  );
+                })}
+                {/* Remove button - only show if there's more than one shortcut */}
+                {displayKeys.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveKey(shortcut, key as ShortcutKey);
+                    }}
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    title="Remove this shortcut"
                   >
-                    {keyPart}
-                  </EditableShortcutKey>
-                );
-              })}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              {index < displayKeys.length - 1 && (
+                <span className="text-xs text-muted-foreground mx-1">or</span>
+              )}
             </div>
-            {index < displayKeys.length - 1 && (
-              <span className="text-xs text-muted-foreground">or</span>
-            )}
-          </div>
-        ))}
+          );
+        })}
+        {/* Add new shortcut button */}
+        {isAddingNew ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="font-sans px-2 min-w-6 min-h-6 leading-none ml-1 border-primary bg-primary/10"
+            title="Press any key combination..."
+          >
+            ...
+          </Button>
+        ) : (
+          <Button
+            variant="text"
+            size="sm"
+            className="px-1 min-w-6 min-h-6 !opacity-0 group-hover:!opacity-100 transition-opacity ml-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartRecording(shortcut, null);
+            }}
+            title="Add another shortcut"
+          >
+            <Plus className="w-3 h-3" />
+          </Button>
+        )}
       </div>
     </div>
   );
