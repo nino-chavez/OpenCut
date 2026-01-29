@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { RenameProjectDialog } from "@/components/rename-project-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,7 +169,10 @@ export default function ProjectsPage() {
               )}
             </div>
           ) : (
-            <CreateButton onClick={handleCreateProject} />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <CreateButton onClick={handleCreateProject} />
+            </div>
           )}
         </div>
       </div>
@@ -207,6 +211,7 @@ export default function ProjectsPage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
+                <ThemeToggle />
                 <Button
                   variant="outline"
                   onClick={() => setIsSelectionMode(true)}
