@@ -296,17 +296,17 @@ export default function ProjectsPage() {
         </div>
 
         {isSelectionMode && sortedProjects.length > 0 && (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => handleSelectAll(!allSelected)}
-            onKeyDown={(e) => {
+            onKeyDown={(e: React.KeyboardEvent) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 handleSelectAll(!allSelected);
               }
             }}
             className="w-full hover:cursor-pointer gap-2 mb-6 p-4 bg-muted/30 rounded-lg border items-center flex"
-            tabIndex={0}
           >
             <Checkbox checked={someSelected ? "indeterminate" : allSelected} />
             <span className="text-sm font-medium">
@@ -315,7 +315,7 @@ export default function ProjectsPage() {
             <span className="text-sm text-muted-foreground">
               ({selectedProjects.size} of {sortedProjects.length} selected)
             </span>
-          </button>
+          </div>
         )}
 
         {isLoading || !isInitialized ? (
