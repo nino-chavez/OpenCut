@@ -105,10 +105,8 @@ export function Footer() {
                 </li>
                 <li>
                   <Link
-                    href="https://github.com/OpenCut-app/OpenCut/blob/main/README.md"
+                    href="/about"
                     className="text-muted-foreground hover:text-foreground transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     About
                   </Link>
