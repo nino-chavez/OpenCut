@@ -3,6 +3,7 @@
 import {
   Calendar,
   ChevronLeft,
+  ExternalLink,
   Loader2,
   MoreHorizontal,
   ArrowDown01,
@@ -492,64 +493,89 @@ function ProjectCard({
             {project.name}
           </h3>
           {!isSelectionMode && (
-            <DropdownMenu
-              open={isDropdownOpen}
-              onOpenChange={setIsDropdownOpen}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="text"
-                  size="sm"
-                  className={`size-6 p-0 transition-all shrink-0 ml-2 ${
-                    isDropdownOpen
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
-                  }`}
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                onCloseAutoFocus={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
+            <div className="flex items-center shrink-0 ml-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a
+                      href={`/editor/${project.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className={`size-6 p-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-all shrink-0 hover:bg-accent hover:text-accent-foreground ${
+                        isDropdownOpen
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    >
+                      <ExternalLink className="size-4" />
+                      <span className="sr-only">Open in new tab</span>
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open in new tab</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenu
+                open={isDropdownOpen}
+                onOpenChange={setIsDropdownOpen}
               >
-                <DropdownMenuItem
-                  onClick={(e) => {
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="text"
+                    size="sm"
+                    className={`size-6 p-0 transition-all shrink-0 ml-2 ${
+                      isDropdownOpen
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  onCloseAutoFocus={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setIsDropdownOpen(false);
-                    setIsRenameDialogOpen(true);
                   }}
                 >
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDuplicateProject();
-                  }}
-                >
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsDropdownOpen(false);
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDropdownOpen(false);
+                      setIsRenameDialogOpen(true);
+                    }}
+                  >
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDuplicateProject();
+                    }}
+                  >
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDropdownOpen(false);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
 
