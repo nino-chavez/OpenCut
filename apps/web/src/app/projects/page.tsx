@@ -566,14 +566,15 @@ function ProjectCard({
   return (
     <>
       {isSelectionMode ? (
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
           className="block group cursor-pointer w-full text-left"
         >
           {cardContent}
-        </button>
+        </div>
       ) : (
         <Link href={`/editor/${project.id}`} className="block group">
           {cardContent}
