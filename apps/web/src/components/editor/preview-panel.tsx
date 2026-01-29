@@ -703,8 +703,52 @@ export function PreviewPanel() {
   // Render blur background layer (handled by canvas now)
   const renderBlurBackground = () => null;
 
-  // Render an element (canvas handles visuals now). Audio playback to be implemented via Web Audio.
-  const renderElement = (_elementData: ActiveElement) => null;
+  // Render draggable overlay for text elements (canvas handles visuals, this handles interaction)
+  const renderElement = (elementData: ActiveElement) => {
+    const { element, track } = elementData;
+
+    // Only render overlay for text elements
+    if (element.type !== "text") return null;
+
+    const text = element;
+    const scaleX = previewDimensions.width / canvasSize.width;
+    const scaleY = previewDimensions.height / canvasSize.height;
+
+    // Use drag state position if this element is being dragged
+    const isDraggingThis =
+      dragState.isDragging && dragState.elementId === element.id;
+    const currentX = isDraggingThis ? dragState.currentX : text.x;
+    const currentY = isDraggingThis ? dragState.currentY : text.y;
+
+    // Calculate position (same formula as timeline-renderer.ts)
+    const posX = previewDimensions.width / 2 + currentX * scaleX;
+    const posY = previewDimensions.height / 2 + currentY * scaleY;
+
+    // Estimate text dimensions for the hit area
+    const fontSize = text.fontSize * scaleX;
+    const estimatedWidth = text.content.length * fontSize * 0.6;
+    const estimatedHeight = fontSize * 1.4;
+
+    return (
+      <div
+        key={element.id}
+        className="absolute flex items-center justify-center"
+        onMouseDown={(e) => handleTextMouseDown(e, element, track.id)}
+        style={{
+          left: posX,
+          top: posY,
+          transform: `translate(-50%, -50%) rotate(${text.rotation}deg)`,
+          width: Math.max(estimatedWidth, 50),
+          height: Math.max(estimatedHeight, 24),
+          cursor: isDraggingThis ? "grabbing" : "grab",
+          opacity: 0, // Invisible overlay - canvas shows the actual text
+          pointerEvents: "auto",
+          zIndex: 10,
+        }}
+        title="Drag to reposition text"
+      />
+    );
+  };
 
   return (
     <>
